@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Version ARGs in the Dockerfile, annotated with a preceding renovate comment",
+      "managerFilePatterns": ["Dockerfile"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)(?: extractVersion=(?<extractVersion>\\S+?))?\\s*\\nARG \\w+?_(?:VERSION|TAG)=(?<currentValue>\\S+)"
+      ]
+    }
+  ]
+}
