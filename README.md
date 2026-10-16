@@ -40,8 +40,9 @@ clones, worktrees) and `~/.claude`. Mount one volume there. The image runs as
 `node` (uid/gid 1000); on Kubernetes set `fsGroup: 1000` so the volume is
 writable.
 
-Cyrus has no web UI. Expose only `/linear-webhook` and `/github-webhook` to the
-internet. Its `/api/update/*` endpoints change config and should stay private
+Cyrus has no web UI. Expose only `/linear-webhook` to the internet, plus
+`/github-webhook` if you want GitHub triggers (read [Security](#security)
+first). Its `/api/update/*` endpoints change config and should stay private
 (they reject every request while `CYRUS_API_KEY` is unset).
 
 ### Environment
@@ -75,8 +76,9 @@ docker exec -it \
 ```
 
 Open the printed URL in a browser that can reach the container's port 3457 (for
-`docker run`, publish it with `-p 3457:3457`). Then add repositories with
-`docker exec -it cyrus cyrus self-add-repo <git-url>`. No restart is needed.
+`docker run`, publish it with `-p 3457:3457`). Restart the container afterwards
+so Cyrus loads the new tokens. Then add repositories with
+`docker exec -it cyrus cyrus self-add-repo <git-url>`; that needs no restart.
 
 ## Security
 
@@ -85,18 +87,24 @@ Read this before pointing Cyrus at repositories other people can comment on.
 - **Agent sessions can read every secret.** Cyrus passes its whole environment
   to each Claude session, and sessions run as the same user. A session can read
   the GitHub App key, `GITHUB_TOKEN`, the Linear secret and the Claude token.
-- **Anyone who can comment on a PR can start a session on GitHub.** Cyrus only
-  checks that the comment mentions the bot. `userAccessControl.allowedUsers`
-  applies to Linear only. Install the GitHub App only on repos where you trust
-  every commenter.
+- **GitHub triggers have no author check.** On a repo that sends Cyrus
+  webhooks, any GitHub user who mentions the bot in a PR comment starts a
+  session, and any "request changes" review starts one without a mention.
+  `userAccessControl` applies to Linear only. On repos with outside
+  contributors, drive Cyrus from Linear only: leave `GITHUB_WEBHOOK_SECRET`
+  unset and don't expose `/github-webhook`. Cyrus still pushes and opens PRs
+  with `GITHUB_TOKEN`. With neither `GITHUB_WEBHOOK_SECRET` nor
+  `CYRUS_API_KEY` set, `/github-webhook` rejects every request.
 - **Limit Linear delegation** with `userAccessControl.allowedUsers` in
   `~/.cyrus/config.json`.
 - **Turn on the egress sandbox** (`"sandbox": {"enabled": true,
   "networkPolicy": {"preset": "trusted"}}` in `config.json`). It filters
   traffic from Bash-run tools only, and the preset allows GitHub, so treat it
   as damage limitation.
-- **Scope the credentials.** Use a fine-grained PAT limited to the target
-  repos, and a Claude token you can revoke on its own.
+- **Scope the credentials.** Give `GITHUB_TOKEN` to a dedicated bot account
+  that is a collaborator only on the target repos. A fine-grained PAT can't
+  reach repos owned by another personal account, so outside an org that means
+  a classic `repo` PAT. Use a Claude token you can revoke on its own.
 
 ## Building
 

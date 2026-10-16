@@ -79,6 +79,15 @@ echo "== http =="
 # to connect. 401 means it is reachable and rejecting the unsigned request.
 check "unsigned POST /linear-webhook" "401" \
     "$(curl -sS -o /dev/null -w '%{http_code}' -X POST "http://127.0.0.1:${PORT}/linear-webhook" || echo failed)"
+# No GITHUB_WEBHOOK_SECRET or CYRUS_API_KEY here, so the route expects a
+# Bearer token equal to the empty string. Nothing may get through.
+for auth in "" "Authorization: Bearer "; do
+    check "POST /github-webhook [${auth:-no auth}]" "401" \
+        "$(curl -sS -o /dev/null -w '%{http_code}' -X POST \
+            -H 'content-type: application/json' -H 'x-github-event: issue_comment' \
+            ${auth:+-H "${auth}"} -d '{"action":"created"}' \
+            "http://127.0.0.1:${PORT}/github-webhook" || echo failed)"
+done
 
 echo
 echo "== entrypoint =="
