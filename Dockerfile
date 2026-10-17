@@ -28,12 +28,14 @@ LABEL maintainer="temikus" \
     org.opencontainers.image.url="https://github.com/cyrusagents/cyrus" \
     org.opencontainers.image.licenses="Apache-2.0"
 
-# tini reaps the agent subprocesses that Claude sessions spawn.
+# tini reaps the agent subprocesses that Claude sessions spawn. bubblewrap and
+# socat back Claude Code's Linux sandbox, which Cyrus's `sandbox` option uses.
 # Package versions follow the pinned base image; exact apt pins break on every
 # Debian point release.
 # hadolint ignore=DL3008
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl git jq openssh-client tini \
+    && apt-get install -y --no-install-recommends \
+        bubblewrap ca-certificates curl git jq openssh-client socat tini \
     && rm -rf /var/lib/apt/lists/*
 
 # Debian's gh lags upstream by a year or more.

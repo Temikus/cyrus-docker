@@ -60,9 +60,12 @@ check "PID 1" "tini" "$(docker exec "${NAME}" cat /proc/1/comm)"
 
 echo
 echo "== tools on PATH =="
-for bin in cyrus claude gh git jq; do
+for bin in cyrus claude gh git jq bwrap socat; do
+    # socat has no --version; -V prints the version and exits 0.
+    flag="--version"
+    [ "${bin}" = socat ] && flag="-V"
     # Capture first, then trim: piping into head would hide a failing exit code.
-    if version="$(docker exec "${NAME}" "${bin}" --version 2>&1)"; then
+    if version="$(docker exec "${NAME}" "${bin}" "${flag}" 2>&1)"; then
         printf 'ok   %-34s %s\n' "${bin}" "${version%%$'\n'*}"
     else
         printf 'FAIL %-34s --version failed: %s\n' "${bin}" "${version%%$'\n'*}"

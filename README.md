@@ -14,7 +14,8 @@ and linux/arm64.
 - **Listens on all interfaces.** Cyrus binds `localhost` unless
   `CYRUS_HOST_EXTERNAL=true`, which would make it unreachable in a container.
   The image sets it.
-- **Toolchain included.** `git`, `gh`, `jq` and `openssh-client`. Git over
+- **Toolchain included.** `git`, `gh`, `jq`, `openssh-client`, plus
+  `bubblewrap` and `socat` for Claude Code's sandbox. Git over
   HTTPS signs in with `$GITHUB_TOKEN` through `gh`. Claude Code comes bundled
   with the Agent SDK.
 - **GitHub App key from an env var.** Cyrus reads the key only from
@@ -100,7 +101,12 @@ Read this before pointing Cyrus at repositories other people can comment on.
 - **Turn on the egress sandbox** (`"sandbox": {"enabled": true,
   "networkPolicy": {"preset": "trusted"}}` in `config.json`). It filters
   traffic from Bash-run tools only, and the preset allows GitHub, so treat it
-  as damage limitation.
+  as damage limitation. It runs tools under `bubblewrap`, which needs
+  unprivileged user namespaces inside the container. Ubuntu 24.04 hosts block
+  those by default (`kernel.apparmor_restrict_unprivileged_userns=1`), as does
+  the default container AppArmor profile. Cyrus logs
+  `[bwrap-sandbox] bubblewrap cannot create an unprivileged user namespace`
+  when that's the case.
 - **Scope the credentials.** Give `GITHUB_TOKEN` to a dedicated bot account
   that is a collaborator only on the target repos. A fine-grained PAT can't
   reach repos owned by another personal account, so outside an org that means
