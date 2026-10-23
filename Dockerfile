@@ -13,7 +13,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # renovate: datasource=npm depName=cyrus-ai
 ARG CYRUS_VERSION=0.2.73
 # renovate: datasource=github-releases depName=cli/cli extractVersion=^v(?<version>.*)$
-ARG GH_VERSION=2.103.0
+ARG GH_VERSION=2.103.2
 ARG TARGETARCH
 ARG BUILD_DATE
 ARG VCS_REF
