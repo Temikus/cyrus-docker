@@ -4,7 +4,7 @@
 # on a Node base. Versions are pinned ARGs that Renovate bumps; see README.md.
 
 # renovate: datasource=docker depName=node
-ARG NODE_TAG=24.22.1-trixie-slim
+ARG NODE_TAG=24.22.2-trixie-slim
 
 FROM node:${NODE_TAG}
 
