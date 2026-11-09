@@ -75,11 +75,14 @@ done
 if [ -n "${WANT_VERSION}" ]; then
     check "cyrus version" "${WANT_VERSION}" "$(docker exec "${NAME}" cyrus --version)"
 fi
-# Repo configs under ~/.cyrus must be trusted via MISE_TRUSTED_CONFIG_PATHS;
-# otherwise mise refuses templated config and sessions hit a trust prompt.
-check "mise trusts repo configs" "~/.cyrus/repos/smoke: trusted" \
+# Repo configs must stay untrusted (agents can edit them), and a plain [tools]
+# pin must still install and resolve through the shims without trust.
+check "mise leaves repo configs untrusted" "~/.cyrus/repos/smoke: untrusted" \
     "$(docker exec "${NAME}" sh -c 'mkdir -p ~/.cyrus/repos/smoke && cd ~/.cyrus/repos/smoke \
-        && printf "[tools]\n" > mise.toml && mise trust --show' 2>&1)"
+        && printf "[tools]\ngo = \"1.25.3\"\n" > mise.toml && mise trust --show' 2>&1)"
+check "untrusted [tools] pin installs" "go version go1.25.3" \
+    "$(docker exec "${NAME}" sh -c 'cd ~/.cyrus/repos/smoke && mise install --quiet </dev/null >/dev/null 2>&1; \
+        go version | cut -d" " -f1-3' 2>&1)"
 
 echo
 echo "== http =="

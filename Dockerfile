@@ -82,9 +82,9 @@ WORKDIR /home/node
 ENV CYRUS_HOST_EXTERNAL=true \
     CYRUS_SERVER_PORT=3456
 # mise keeps toolchains under ~/.local/share/mise, so they persist in the
-# volume. Repo configs under ~/.cyrus run without a `mise trust` prompt.
-ENV PATH="/home/node/.local/share/mise/shims:${PATH}" \
-    MISE_TRUSTED_CONFIG_PATHS=/home/node/.cyrus
+# volume. Repo configs stay untrusted on purpose: plain [tools] pins work
+# without trust, while templates, env and hooks need an explicit `mise trust`.
+ENV PATH="/home/node/.local/share/mise/shims:${PATH}"
 EXPOSE 3456
 VOLUME ["/home/node"]
 

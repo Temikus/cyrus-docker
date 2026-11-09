@@ -23,7 +23,8 @@ and linux/arm64.
   repo that pins Go (or anything else) in `mise.toml` gets that version on
   `PATH`. Toolchains live in `~/.local/share/mise`, inside the volume, so they
   download once. A repo added later gets its tools on the next restart, or when
-  a session runs `mise install`.
+  a session runs `mise install`. Repo configs are not trusted, so a
+  `mise.toml` that uses templates, `[env]`, or hooks needs `mise trust` first.
 - **GitHub App key from an env var.** Cyrus reads the key only from
   `~/.cyrus/github-app.pem`. If `GITHUB_APP_PRIVATE_KEY` is set, the entrypoint
   writes it there with mode 600.
