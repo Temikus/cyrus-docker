@@ -60,7 +60,7 @@ check "PID 1" "tini" "$(docker exec "${NAME}" cat /proc/1/comm)"
 
 echo
 echo "== tools on PATH =="
-for bin in cyrus claude gh git jq bwrap socat; do
+for bin in cyrus claude gh git jq bwrap socat just make python3 rg mise; do
     # socat has no --version; -V prints the version and exits 0.
     flag="--version"
     [ "${bin}" = socat ] && flag="-V"
@@ -75,6 +75,11 @@ done
 if [ -n "${WANT_VERSION}" ]; then
     check "cyrus version" "${WANT_VERSION}" "$(docker exec "${NAME}" cyrus --version)"
 fi
+# Repo configs under ~/.cyrus must be trusted via MISE_TRUSTED_CONFIG_PATHS;
+# otherwise mise refuses templated config and sessions hit a trust prompt.
+check "mise trusts repo configs" "~/.cyrus/repos/smoke: trusted" \
+    "$(docker exec "${NAME}" sh -c 'mkdir -p ~/.cyrus/repos/smoke && cd ~/.cyrus/repos/smoke \
+        && printf "[tools]\n" > mise.toml && mise trust --show' 2>&1)"
 
 echo
 echo "== http =="
