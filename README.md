@@ -14,10 +14,16 @@ and linux/arm64.
 - **Listens on all interfaces.** Cyrus binds `localhost` unless
   `CYRUS_HOST_EXTERNAL=true`, which would make it unreachable in a container.
   The image sets it.
-- **Toolchain included.** `git`, `gh`, `jq`, `openssh-client`, plus
-  `bubblewrap` and `socat` for Claude Code's sandbox. Git over
-  HTTPS signs in with `$GITHUB_TOKEN` through `gh`. Claude Code comes bundled
-  with the Agent SDK.
+- **Toolchain included.** `git`, `gh`, `jq`, `just`, `make`, `python3`,
+  `ripgrep`, `openssh-client`, plus `bubblewrap` and `socat` for Claude Code's
+  sandbox. Git over HTTPS signs in with `$GITHUB_TOKEN` through `gh`. Claude
+  Code comes bundled with the Agent SDK.
+- **Per-repo toolchains through mise.** On start, the entrypoint runs
+  `mise install` in each repo under `~/.cyrus/repos` in the background, so a
+  repo that pins Go (or anything else) in `mise.toml` gets that version on
+  `PATH`. Toolchains live in `~/.local/share/mise`, inside the volume, so they
+  download once. A repo added later gets its tools on the next restart, or when
+  a session runs `mise install`.
 - **GitHub App key from an env var.** Cyrus reads the key only from
   `~/.cyrus/github-app.pem`. If `GITHUB_APP_PRIVATE_KEY` is set, the entrypoint
   writes it there with mode 600.

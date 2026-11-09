@@ -12,4 +12,15 @@ if [ -n "${GITHUB_APP_PRIVATE_KEY:-}" ]; then
   (umask 077 && printf '%s\n' "$GITHUB_APP_PRIVATE_KEY" > "$HOME/.cyrus/github-app.pem")
 fi
 
+# Install each configured repo's mise-pinned tools in the background, so `go`
+# and friends resolve through the shims without delaying startup. The double
+# fork hands the job to tini to reap; Cyrus would leave it a zombie.
+( (
+  for repo in "$HOME"/.cyrus/repos/*/; do
+    [ -d "$repo" ] || continue
+    name=$(basename "$repo")
+    (cd "$repo" && mise install --quiet) || echo "mise: install failed for $name" >&2
+  done
+) & )
+
 exec "$@"
