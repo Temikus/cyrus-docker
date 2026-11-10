@@ -18,13 +18,11 @@ and linux/arm64.
   `ripgrep`, `openssh-client`, plus `bubblewrap` and `socat` for Claude Code's
   sandbox. Git over HTTPS signs in with `$GITHUB_TOKEN` through `gh`. Claude
   Code comes bundled with the Agent SDK.
-- **Per-repo toolchains through mise.** On start, the entrypoint runs
-  `mise install` in each repo under `~/.cyrus/repos` in the background, so a
-  repo that pins Go (or anything else) in `mise.toml` gets that version on
-  `PATH`. Toolchains live in `~/.local/share/mise`, inside the volume, so they
-  download once. A repo added later gets its tools on the next restart, or when
-  a session runs `mise install`. Repo configs are not trusted, so a
-  `mise.toml` that uses templates, `[env]`, or hooks needs `mise trust` first.
+- **Per-repo toolchains through mise.** `mise install` in a repo or worktree
+  installs the versions its `mise.toml` pins (Go or anything else) and puts
+  them on `PATH` through mise's shims. Toolchains live in `~/.local/share/mise`,
+  inside the volume, so they download once. Nothing installs on start: a
+  session runs `mise install` when it needs a tool.
 - **GitHub App key from an env var.** Cyrus reads the key only from
   `~/.cyrus/github-app.pem`. If `GITHUB_APP_PRIVATE_KEY` is set, the entrypoint
   writes it there with mode 600.
@@ -103,6 +101,9 @@ Read this before pointing Cyrus at repositories other people can comment on.
   unset and don't expose `/github-webhook`. Cyrus still pushes and opens PRs
   with `GITHUB_TOKEN`. With neither `GITHUB_WEBHOOK_SECRET` nor
   `CYRUS_API_KEY` set, `/github-webhook` rejects every request.
+- **`mise install` runs repo code.** It trusts the repo's `mise.toml`, whose
+  hooks and `[env]` templates then run with every secret. Treat it like the
+  repo's build scripts.
 - **Limit Linear delegation** with `userAccessControl.allowedUsers` in
   `~/.cyrus/config.json`.
 - **Turn on the egress sandbox** (`"sandbox": {"enabled": true,
