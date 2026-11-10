@@ -42,8 +42,8 @@ RUN apt-get update \
         python3 python3-venv ripgrep socat tini \
     && rm -rf /var/lib/apt/lists/*
 
-# Language toolchains (Go etc.) come from each repo's own mise pins rather
-# than one baked-in version; see the entrypoint.
+# Language toolchains (Go etc.) come from each repo's own mise pins, via
+# `mise install`, rather than one baked-in version.
 RUN arch="${TARGETARCH:-$(dpkg --print-architecture)}" \
     && case "${arch}" in amd64) arch=x64 ;; esac \
     && asset="mise-v${MISE_VERSION}-linux-${arch}" \
@@ -81,9 +81,7 @@ WORKDIR /home/node
 # from outside the container.
 ENV CYRUS_HOST_EXTERNAL=true \
     CYRUS_SERVER_PORT=3456
-# mise keeps toolchains under ~/.local/share/mise, so they persist in the
-# volume. Repo configs stay untrusted on purpose: plain [tools] pins work
-# without trust, while templates, env and hooks need an explicit `mise trust`.
+# mise keeps toolchains under ~/.local/share/mise, so they persist in the volume.
 ENV PATH="/home/node/.local/share/mise/shims:${PATH}"
 EXPOSE 3456
 VOLUME ["/home/node"]
