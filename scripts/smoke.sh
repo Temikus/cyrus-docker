@@ -60,7 +60,7 @@ check "PID 1" "tini" "$(docker exec "${NAME}" cat /proc/1/comm)"
 
 echo
 echo "== tools on PATH =="
-for bin in cyrus claude gh git jq bwrap socat; do
+for bin in cyrus claude gh git jq bwrap socat just make python3 rg mise; do
     # socat has no --version; -V prints the version and exits 0.
     flag="--version"
     [ "${bin}" = socat ] && flag="-V"
@@ -75,6 +75,12 @@ done
 if [ -n "${WANT_VERSION}" ]; then
     check "cyrus version" "${WANT_VERSION}" "$(docker exec "${NAME}" cyrus --version)"
 fi
+# A repo's pin must shadow the system jq (1.7) through the shims, and only there.
+check "mise pin resolves in its repo" "jq-1.7.1" \
+    "$(docker exec "${NAME}" sh -c 'mkdir -p ~/.cyrus/repos/smoke && cd ~/.cyrus/repos/smoke \
+        && printf "[tools]\njq = \"1.7.1\"\n" > mise.toml && mise install --quiet </dev/null >/dev/null 2>&1; \
+        jq --version' 2>&1)"
+check "system jq outside the repo" "jq-1.7" "$(docker exec "${NAME}" sh -c 'cd / && jq --version' 2>&1)"
 
 echo
 echo "== http =="

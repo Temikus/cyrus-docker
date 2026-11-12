@@ -14,6 +14,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG CYRUS_VERSION=0.2.77
 # renovate: datasource=github-releases depName=cli/cli extractVersion=^v(?<version>.*)$
 ARG GH_VERSION=2.103.3
+# renovate: datasource=github-releases depName=jdx/mise extractVersion=^v(?<version>.*)$
+ARG MISE_VERSION=2026.10.20
 ARG TARGETARCH
 ARG BUILD_DATE
 ARG VCS_REF
@@ -30,13 +32,27 @@ LABEL maintainer="temikus" \
 
 # tini reaps the agent subprocesses that Claude sessions spawn. bubblewrap and
 # socat back Claude Code's Linux sandbox, which Cyrus's `sandbox` option uses.
+# python3, just, make and ripgrep are what agent sessions reach for most.
 # Package versions follow the pinned base image; exact apt pins break on every
 # Debian point release.
 # hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        bubblewrap ca-certificates curl git jq openssh-client socat tini \
+        bubblewrap ca-certificates curl git jq just make openssh-client \
+        python3 python3-venv ripgrep socat tini \
     && rm -rf /var/lib/apt/lists/*
+
+# Language toolchains (Go etc.) come from each repo's own mise pins, via
+# `mise install`, rather than one baked-in version.
+RUN arch="${TARGETARCH:-$(dpkg --print-architecture)}" \
+    && case "${arch}" in amd64) arch=x64 ;; esac \
+    && asset="mise-v${MISE_VERSION}-linux-${arch}" \
+    && curl -fsSL "https://github.com/jdx/mise/releases/download/v${MISE_VERSION}/${asset}" \
+        -o "/tmp/${asset}" \
+    && curl -fsSL "https://github.com/jdx/mise/releases/download/v${MISE_VERSION}/SHASUMS256.txt" \
+        | grep " ./${asset}$" | sed 's| \./| /tmp/|' | sha256sum -c - \
+    && install -m0755 "/tmp/${asset}" /usr/local/bin/mise \
+    && rm "/tmp/${asset}"
 
 # Debian's gh lags upstream by a year or more.
 RUN arch="${TARGETARCH:-$(dpkg --print-architecture)}" \
@@ -65,6 +81,8 @@ WORKDIR /home/node
 # from outside the container.
 ENV CYRUS_HOST_EXTERNAL=true \
     CYRUS_SERVER_PORT=3456
+# mise keeps toolchains under ~/.local/share/mise, so they persist in the volume.
+ENV PATH="/home/node/.local/share/mise/shims:${PATH}"
 EXPOSE 3456
 VOLUME ["/home/node"]
 
