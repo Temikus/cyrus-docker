@@ -11,7 +11,7 @@ FROM node:${NODE_TAG}
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # renovate: datasource=npm depName=cyrus-ai
-ARG CYRUS_VERSION=0.2.79
+ARG CYRUS_VERSION=0.2.83
 # renovate: datasource=github-releases depName=cli/cli extractVersion=^v(?<version>.*)$
 ARG GH_VERSION=2.105.0
 ARG TARGETARCH
